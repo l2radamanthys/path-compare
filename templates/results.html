@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="results-layout">
+    <!-- Header results -->
+    <div class="glass-panel results-header">
+        <div class="summary-stats">
+            <div class="stat-box">
+                <span class="stat-value text-accent">{{ diferentes|length }}</span>
+                <span class="stat-label">Diferentes</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value text-success">{{ iguales|length }}</span>
+                <span class="stat-label">Iguales</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value text-warning">{{ solo_en_a|length }}</span>
+                <span class="stat-label">Solo A</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value text-info">{{ solo_en_b|length }}</span>
+                <span class="stat-label">Solo B</span>
+            </div>
+        </div>
+
+        <div class="actions" style="display: flex; gap: 0.5rem;">
+            <form action="{{ url_for('compare') }}" method="POST" style="margin: 0;">
+                <input type="hidden" name="dir_a" value="{{ dir_a }}">
+                <input type="hidden" name="dir_b" value="{{ dir_b }}">
+                <input type="hidden" name="include_exts" value="{{ include_exts }}">
+                <input type="hidden" name="exclude_exts" value="{{ exclude_exts }}">
+                <input type="hidden" name="include_dirs" value="{{ include_dirs }}">
+                <input type="hidden" name="exclude_dirs" value="{{ exclude_dirs }}">
+                <button type="submit" class="btn btn-primary" title="Volver a comparar los mismos directorios">
+                    <span class="icon">🔄</span> Actualizar
+                </button>
+            </form>
+            <a href="{{ url_for('index') }}" class="btn btn-outline">
+                <span class="icon">⬅️</span> Nueva Comparación
+            </a>
+        </div>
+    </div>
+
+    <!-- Hidden data for JS diffuse call -->
+    <input type="hidden" id="dir_a_val" value="{{ dir_a }}">
+    <input type="hidden" id="dir_b_val" value="{{ dir_b }}">
+
+    <div class="results-stack">
+        <!-- Diferentes -->
+        <div class="glass-panel lists-container">
+            <h3 class="list-title"><span class="icon">⚡</span> Archivos Diferentes</h3>
+            <p class="list-subtitle">Clic en un archivo para abrir en Diffuse</p>
+            {% if diferentes %}
+                <ul class="file-list interactive-list">
+                    {% for f in diferentes %}
+                    <li class="file-item diff-item" data-file="{{ f }}">
+                        <span class="file-icon">📝</span>
+                        <span class="file-name">{{ f }}</span>
+                        <button class="open-btn" title="Abrir en Diffuse">Abrir</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">No se encontraron diferencias.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Only in A-->
+        <div class="glass-panel lists-container">
+            <h3 class="list-title"><span class="icon">📁</span> Solo en Dir A</h3>
+            <p class="list-subtitle text-muted">{{ dir_a }}</p>
+            {% if solo_en_a %}
+                <ul class="file-list">
+                    {% for f in solo_en_a %}
+                    <li class="file-item">
+                        <span class="file-icon">➕</span>
+                        <span class="file-name">{{ f }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">No hay archivos exclusivos.</p>
+            {% endif %}
+        </div>
+        
+        <!-- Only in B -->
+        <div class="glass-panel lists-container">
+            <h3 class="list-title"><span class="icon">📁</span> Solo en Dir B</h3>
+            <p class="list-subtitle text-muted">{{ dir_b }}</p>
+            {% if solo_en_b %}
+                <ul class="file-list">
+                    {% for f in solo_en_b %}
+                    <li class="file-item">
+                        <span class="file-icon">➕</span>
+                        <span class="file-name">{{ f }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-state">No hay archivos exclusivos.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

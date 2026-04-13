@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patch Compare | Web App</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <header class="app-header">
+        <div class="container">
+            <h1><span class="icon">🔄</span> Patch Compare</h1>
+            <p>Comparador Inteligente de Directorios</p>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal para el Navegador de Archivos -->
+    <div class="modal" id="folderPickerModal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Seleccionar Carpeta</h2>
+                <button type="button" class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="current-path-display">
+                    <strong>Ruta actual:</strong> <span id="currentPathLabel"></span>
+                </div>
+                <div class="folder-list" id="folderList">
+                    <!-- Las carpetas se cargarán aquí vía JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="selectFolderBtn">Seleccionar esta carpeta</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="glass-panel form-container">
+    <h2>Configuración de la Comparación</h2>
+    
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('compare') }}" method="POST">
+        <!-- Directorios -->
+        <div class="form-section">
+            <h3>Directorios a Comparar</h3>
+            <div class="form-group row">
+                <div class="input-wrapper input-with-btn">
+                    <label for="dir_a">Directorio A (Original):</label>
+                    <div class="flex-row">
+                        <input type="text" id="dir_a" name="dir_a" required placeholder="/ruta/al/directorio/a" autocomplete="off">
+                        <button type="button" class="btn btn-outline browse-btn" data-target="dir_a">Examinar</button>
+                    </div>
+                </div>
+                <div class="input-wrapper input-with-btn">
+                    <label for="dir_b">Directorio B (Modificado):</label>
+                    <div class="flex-row">
+                        <input type="text" id="dir_b" name="dir_b" required placeholder="/ruta/al/directorio/b" autocomplete="off">
+                        <button type="button" class="btn btn-outline browse-btn" data-target="dir_b">Examinar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Filtros -->
+        <div class="form-section">
+            <h3>Filtros de Búsqueda (Opcionales)</h3>
+            <p class="section-help">Separar por comas (ejemplo: .py, .txt o node_modules, .git)</p>
+            
+            <div class="form-group row">
+                <div class="input-wrapper">
+                    <label for="include_exts">Incluir Extensiones:</label>
+                    <input type="text" id="include_exts" name="include_exts" placeholder=".py, .html, .css">
+                </div>
+                <div class="input-wrapper">
+                    <label for="exclude_exts">Excluir Extensiones:</label>
+                    <input type="text" id="exclude_exts" name="exclude_exts" placeholder=".pyc, .log">
+                </div>
+            </div>
+            
+            <div class="form-group row">
+                <div class="input-wrapper">
+                    <label for="include_dirs">Incluir Carpetas:</label>
+                    <input type="text" id="include_dirs" name="include_dirs" placeholder="src, public">
+                </div>
+                <div class="input-wrapper">
+                    <label for="exclude_dirs">Excluir Carpetas:</label>
+                    <input type="text" id="exclude_dirs" name="exclude_dirs" placeholder=".venv, .git, __pycache__">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large glow-effect">
+                <span class="icon">🚀</span> Iniciar Comparación
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
