@@ -2,30 +2,49 @@
 
 {% block content %}
 <div class="glass-panel form-container">
-    <h2>Configuración de la Comparación</h2>
-    
+    <div class="form-header-row">
+        <h2>Configuración de la Comparación</h2>
+        <button type="button" class="btn btn-outline btn-sm" id="clearFormBtn" title="Limpiar campos del formulario">
+            Limpiar campos
+        </button>
+    </div>
+
     {% if error %}
     <div class="alert alert-error">
         {{ error }}
     </div>
     {% endif %}
 
-    <form action="{{ url_for('compare') }}" method="POST">
+    <!-- Historial reciente (poblado vía JS desde localStorage) -->
+    <div id="recentHistorySection" class="recent-history hidden">
+        <div class="recent-history-header">
+            <span class="recent-title">Comparaciones recientes</span>
+            <button type="button" class="link-btn" id="clearHistoryBtn">Borrar historial</button>
+        </div>
+        <div id="recentHistoryList" class="recent-history-list"></div>
+    </div>
+
+    <form action="{{ url_for('compare') }}" method="POST" id="compareForm">
         <!-- Directorios -->
         <div class="form-section">
-            <h3>Directorios a Comparar</h3>
+            <div class="section-header-row">
+                <h3>Directorios a Comparar</h3>
+                <button type="button" class="btn btn-outline btn-sm" id="swapDirsBtn" title="Intercambiar Directorio A y Directorio B">
+                    ⇄ Intercambiar A ↔ B
+                </button>
+            </div>
             <div class="form-group row">
                 <div class="input-wrapper input-with-btn">
                     <label for="dir_a">Directorio A (Original):</label>
                     <div class="flex-row">
-                        <input type="text" id="dir_a" name="dir_a" required placeholder="/ruta/al/directorio/a" autocomplete="off">
+                        <input type="text" id="dir_a" name="dir_a" required placeholder="/ruta/al/directorio/a" autocomplete="off" value="{{ form_data.get('dir_a', '') if form_data else '' }}">
                         <button type="button" class="btn btn-outline browse-btn" data-target="dir_a">Examinar</button>
                     </div>
                 </div>
                 <div class="input-wrapper input-with-btn">
                     <label for="dir_b">Directorio B (Modificado):</label>
                     <div class="flex-row">
-                        <input type="text" id="dir_b" name="dir_b" required placeholder="/ruta/al/directorio/b" autocomplete="off">
+                        <input type="text" id="dir_b" name="dir_b" required placeholder="/ruta/al/directorio/b" autocomplete="off" value="{{ form_data.get('dir_b', '') if form_data else '' }}">
                         <button type="button" class="btn btn-outline browse-btn" data-target="dir_b">Examinar</button>
                     </div>
                 </div>
@@ -36,28 +55,39 @@
 
         <!-- Filtros -->
         <div class="form-section">
-            <h3>Filtros de Búsqueda (Opcionales)</h3>
-            <p class="section-help">Separar por comas (ejemplo: .py, .txt o node_modules, .git)</p>
-            
+            <div class="section-header-row">
+                <div>
+                    <h3>Filtros de Búsqueda (Opcionales)</h3>
+                    <p class="section-help">Separar por comas (ejemplo: .py, .txt o node_modules, .git)</p>
+                </div>
+                <div class="presets-bar">
+                    <span class="presets-label">Presets rápidos:</span>
+                    <button type="button" class="preset-chip" data-exclude-dirs=".git" data-exclude-exts="">+ Git</button>
+                    <button type="button" class="preset-chip" data-exclude-dirs=".venv, venv, __pycache__, .pytest_cache" data-exclude-exts=".pyc, .pyo">+ Python</button>
+                    <button type="button" class="preset-chip" data-exclude-dirs="node_modules, dist, build, .next" data-exclude-exts=".map">+ Node/JS</button>
+                    <button type="button" class="preset-chip" data-exclude-dirs=".vscode, .idea" data-exclude-exts=".log, .tmp">+ IDE/Logs</button>
+                </div>
+            </div>
+
             <div class="form-group row">
                 <div class="input-wrapper">
                     <label for="include_exts">Incluir Extensiones:</label>
-                    <input type="text" id="include_exts" name="include_exts" placeholder=".py, .html, .css">
+                    <input type="text" id="include_exts" name="include_exts" placeholder=".py, .html, .css" value="{{ form_data.get('include_exts', '') if form_data else '' }}">
                 </div>
                 <div class="input-wrapper">
                     <label for="exclude_exts">Excluir Extensiones:</label>
-                    <input type="text" id="exclude_exts" name="exclude_exts" placeholder=".pyc, .log">
+                    <input type="text" id="exclude_exts" name="exclude_exts" placeholder=".pyc, .log" value="{{ form_data.get('exclude_exts', '') if form_data else '' }}">
                 </div>
             </div>
-            
+
             <div class="form-group row">
                 <div class="input-wrapper">
                     <label for="include_dirs">Incluir Carpetas:</label>
-                    <input type="text" id="include_dirs" name="include_dirs" placeholder="src, public">
+                    <input type="text" id="include_dirs" name="include_dirs" placeholder="src, public" value="{{ form_data.get('include_dirs', '') if form_data else '' }}">
                 </div>
                 <div class="input-wrapper">
                     <label for="exclude_dirs">Excluir Carpetas:</label>
-                    <input type="text" id="exclude_dirs" name="exclude_dirs" placeholder=".venv, .git, __pycache__">
+                    <input type="text" id="exclude_dirs" name="exclude_dirs" placeholder=".venv, .git, __pycache__" value="{{ form_data.get('exclude_dirs', '') if form_data else '' }}">
                 </div>
             </div>
         </div>

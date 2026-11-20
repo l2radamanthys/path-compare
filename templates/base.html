@@ -10,6 +10,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Local CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Highlight.js para resaltado de sintaxis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" defer></script>
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("patch_compare_theme_v1");
+                var prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+                var theme = saved || (prefersLight ? "light" : "dark");
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="background-effects">
@@ -18,15 +32,26 @@
     </div>
 
     <header class="app-header">
-        <div class="container">
-            <h1><span class="icon">🔄</span> Patch Compare</h1>
-            <p>Comparador Inteligente de Directorios</p>
+        <div class="container header-inner">
+            <div class="header-brand">
+                <a href="{{ url_for('index') }}" class="brand-link">
+                    <h1><span class="icon">🔄</span> Patch Compare</h1>
+                </a>
+                <p>Comparador Inteligente de Directorios</p>
+            </div>
+            <button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="Cambiar entre modo claro y oscuro" aria-label="Cambiar tema">
+                <span class="theme-icon" id="themeToggleIcon">☀️</span>
+                <span class="theme-label" id="themeToggleLabel">Modo Claro</span>
+            </button>
         </div>
     </header>
 
-    <main class="container">
+    <main class="container {% block main_class %}{% endblock %}">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Contenedor de Notificaciones Toast -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <!-- Modal para el Navegador de Archivos -->
     <div class="modal" id="folderPickerModal">
@@ -46,6 +71,68 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelModal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="selectFolderBtn">Seleccionar esta carpeta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Vista Previa de Diff -->
+    <div class="modal" id="diffPreviewModal">
+        <div class="modal-content modal-wide glass-panel">
+            <div class="modal-header">
+                <div class="diff-modal-title-wrap">
+                    <h2 id="diffModalTitle">Vista Previa de Diff</h2>
+                    <div id="diffModalStats" class="diff-stats"></div>
+                </div>
+                <button type="button" class="close-btn" id="closeDiffModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="diffViewer" class="diff-viewer">
+                    <div class="loading-state">Cargando diff...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="diffModalOpenExternalBtn">Abrir en herramienta externa</button>
+                <button type="button" class="btn btn-secondary" id="closeDiffModalFooter">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Vista Previa de Archivo con Resaltado de Código -->
+    <div class="modal" id="filePreviewModal">
+        <div class="modal-content modal-wide glass-panel">
+            <div class="modal-header">
+                <div class="diff-modal-title-wrap">
+                    <h2 id="filePreviewTitle">Vista Previa de Archivo</h2>
+                    <div id="filePreviewMeta" class="file-preview-meta"></div>
+                </div>
+                <button type="button" class="close-btn" id="closeFilePreviewModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="filePreviewBody" class="code-preview-viewer">
+                    <div class="loading-state">Cargando archivo...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline btn-sm" id="filePreviewCopyContentBtn">📋 Copiar código</button>
+                <button type="button" class="btn btn-copy-batch btn-sm hidden" id="filePreviewCopyProjectBtn">Copiar al otro proyecto</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="closeFilePreviewModalFooter">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content modal-sm glass-panel">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle">Confirmar acción</h2>
+                <button type="button" class="close-btn" id="closeConfirmModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmModalMessage" class="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancelConfirmBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="acceptConfirmBtn">Confirmar</button>
             </div>
         </div>
     </div>

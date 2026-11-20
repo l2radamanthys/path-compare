@@ -1,105 +1,194 @@
 {% extends "base.html" %}
 
+{% block main_class %}container-fluid{% endblock %}
+
 {% block content %}
-<div class="results-layout">
+<div class="results-layout" id="resultsApp">
     <!-- Header results -->
     <div class="glass-panel results-header">
-        <div class="summary-stats">
-            <div class="stat-box">
-                <span class="stat-value text-accent">{{ diferentes|length }}</span>
-                <span class="stat-label">Diferentes</span>
+        <div class="results-header-top">
+            <div class="summary-stats">
+                <div class="stat-box">
+                    <span class="stat-value text-accent" id="count-diferentes">{{ diferentes|length }}</span>
+                    <span class="stat-label">Diferentes</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value text-warning" id="count-solo_a">{{ solo_en_a|length }}</span>
+                    <span class="stat-label">Solo A</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value text-info" id="count-solo_b">{{ solo_en_b|length }}</span>
+                    <span class="stat-label">Solo B</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value text-success" id="count-iguales">{{ iguales|length }}</span>
+                    <span class="stat-label">Iguales</span>
+                </div>
             </div>
-            <div class="stat-box">
-                <span class="stat-value text-success">{{ iguales|length }}</span>
-                <span class="stat-label">Iguales</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-value text-warning">{{ solo_en_a|length }}</span>
-                <span class="stat-label">Solo A</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-value text-info">{{ solo_en_b|length }}</span>
-                <span class="stat-label">Solo B</span>
-            </div>
-        </div>
 
-        <div class="actions" style="display: flex; gap: 0.5rem;">
-            <form action="{{ url_for('compare') }}" method="POST" style="margin: 0;">
-                <input type="hidden" name="dir_a" value="{{ dir_a }}">
-                <input type="hidden" name="dir_b" value="{{ dir_b }}">
-                <input type="hidden" name="include_exts" value="{{ include_exts }}">
-                <input type="hidden" name="exclude_exts" value="{{ exclude_exts }}">
-                <input type="hidden" name="include_dirs" value="{{ include_dirs }}">
-                <input type="hidden" name="exclude_dirs" value="{{ exclude_dirs }}">
-                <button type="submit" class="btn btn-primary" title="Volver a comparar los mismos directorios">
-                    <span class="icon">🔄</span> Actualizar
+            <div class="header-paths">
+                <div class="path-pill" title="{{ dir_a }}">
+                    <span class="path-tag tag-a">Dir A</span>
+                    <span class="path-text">{{ dir_a }}</span>
+                    <button type="button" class="icon-btn copy-path-btn" data-copy-text="{{ dir_a }}" title="Copiar ruta de Dir A">📋</button>
+                </div>
+                <div class="path-pill" title="{{ dir_b }}">
+                    <span class="path-tag tag-b">Dir B</span>
+                    <span class="path-text">{{ dir_b }}</span>
+                    <button type="button" class="icon-btn copy-path-btn" data-copy-text="{{ dir_b }}" title="Copiar ruta de Dir B">📋</button>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-outline btn-sm" id="viewModeToggle" title="Alternar entre lista plana y árbol de carpetas">
+                    <span class="icon">🌳</span> <span id="viewModeLabel">Vista Árbol</span>
                 </button>
-            </form>
-            <a href="{{ url_for('index') }}" class="btn btn-outline">
-                <span class="icon">⬅️</span> Nueva Comparación
-            </a>
+                <form action="{{ url_for('compare') }}" method="POST" style="margin: 0;">
+                    <input type="hidden" name="dir_a" value="{{ dir_a }}">
+                    <input type="hidden" name="dir_b" value="{{ dir_b }}">
+                    <input type="hidden" name="include_exts" value="{{ include_exts }}">
+                    <input type="hidden" name="exclude_exts" value="{{ exclude_exts }}">
+                    <input type="hidden" name="include_dirs" value="{{ include_dirs }}">
+                    <input type="hidden" name="exclude_dirs" value="{{ exclude_dirs }}">
+                    <button type="submit" class="btn btn-primary btn-sm" title="Volver a comparar los mismos directorios">
+                        <span class="icon">🔄</span> Actualizar
+                    </button>
+                </form>
+                <a href="{{ url_for('index') }}" class="btn btn-outline btn-sm">
+                    <span class="icon">⬅️</span> Nueva
+                </a>
+            </div>
+        </div>
+
+        <!-- Buscador global -->
+        <div class="global-search-row">
+            <div class="search-box global-search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="globalSearchInput" placeholder="Buscar en todas las categorías (nombre de archivo, carpeta o extensión)..." autocomplete="off">
+                <button type="button" class="search-clear-btn hidden" id="globalSearchClear" title="Limpiar búsqueda global">&times;</button>
+            </div>
+            <span class="diff-cmd-badge" title="Herramienta externa configurada (variable PATCH_COMPARE_DIFF_CMD)">
+                Diff externo: <code>{{ diff_cmd }}</code>
+            </span>
         </div>
     </div>
 
-    <!-- Hidden data for JS diffuse call -->
-    <input type="hidden" id="dir_a_val" value="{{ dir_a }}">
-    <input type="hidden" id="dir_b_val" value="{{ dir_b }}">
+    {% if warnings %}
+    <div class="alert alert-warning">
+        <strong>Advertencias durante el escaneo ({{ warnings|length }}):</strong>
+        <ul class="warning-list">
+            {% for w in warnings[:10] %}
+            <li>{{ w }}</li>
+            {% endfor %}
+            {% if warnings|length > 10 %}
+            <li>... y {{ warnings|length - 10 }} más.</li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
 
-    <div class="results-stack">
+    <!-- Datos iniciales en JSON seguro para JS -->
+    <script id="resultsData" type="application/json">
+        {{ {
+            "dir_a": dir_a,
+            "dir_b": dir_b,
+            "diff_cmd": diff_cmd,
+            "filters": {
+                "include_exts": include_exts,
+                "exclude_exts": exclude_exts,
+                "include_dirs": include_dirs,
+                "exclude_dirs": exclude_dirs
+            },
+            "lists": {
+                "diferentes": diferentes,
+                "solo_a": solo_en_a,
+                "solo_b": solo_en_b,
+                "iguales": iguales
+            }
+        } | tojson }}
+    </script>
+
+    <!-- Grid principal de 3 columnas a ancho completo -->
+    <div class="results-grid">
         <!-- Diferentes -->
-        <div class="glass-panel lists-container">
-            <h3 class="list-title"><span class="icon">⚡</span> Archivos Diferentes</h3>
-            <p class="list-subtitle">Clic en un archivo para abrir en Diffuse</p>
-            {% if diferentes %}
-                <ul class="file-list interactive-list">
-                    {% for f in diferentes %}
-                    <li class="file-item diff-item" data-file="{{ f }}">
-                        <span class="file-icon">📝</span>
-                        <span class="file-name">{{ f }}</span>
-                        <button class="open-btn" title="Abrir en Diffuse">Abrir</button>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-state">No se encontraron diferencias.</p>
-            {% endif %}
-        </div>
-        
-        <!-- Only in A-->
-        <div class="glass-panel lists-container">
-            <h3 class="list-title"><span class="icon">📁</span> Solo en Dir A</h3>
-            <p class="list-subtitle text-muted">{{ dir_a }}</p>
-            {% if solo_en_a %}
-                <ul class="file-list">
-                    {% for f in solo_en_a %}
-                    <li class="file-item">
-                        <span class="file-icon">➕</span>
-                        <span class="file-name">{{ f }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-state">No hay archivos exclusivos.</p>
-            {% endif %}
-        </div>
-        
-        <!-- Only in B -->
-        <div class="glass-panel lists-container">
-            <h3 class="list-title"><span class="icon">📁</span> Solo en Dir B</h3>
-            <p class="list-subtitle text-muted">{{ dir_b }}</p>
-            {% if solo_en_b %}
-                <ul class="file-list">
-                    {% for f in solo_en_b %}
-                    <li class="file-item">
-                        <span class="file-icon">➕</span>
-                        <span class="file-name">{{ f }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="empty-state">No hay archivos exclusivos.</p>
-            {% endif %}
-        </div>
+        <section class="glass-panel lists-container" data-category="diferentes">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h3 class="list-title"><span class="icon">⚡</span> Archivos Diferentes</h3>
+                    <span class="badge-count badge-accent" id="badge-diferentes">{{ diferentes|length }}</span>
+                </div>
+                <p class="list-subtitle">Ver diff inline, abrir en {{ diff_cmd }} o sincronizar A ↔ B</p>
+                <div class="search-box category-search-box">
+                    <span class="search-icon">🔎</span>
+                    <input type="text" class="category-search-input" data-category="diferentes" placeholder="Filtrar diferentes..." autocomplete="off">
+                    <button type="button" class="search-clear-btn hidden" data-clear-category="diferentes" title="Limpiar">&times;</button>
+                </div>
+            </div>
+            <div class="file-list-wrapper" id="list-diferentes"></div>
+        </section>
+
+        <!-- Solo en Dir A -->
+        <section class="glass-panel lists-container" data-category="solo_a">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h3 class="list-title"><span class="icon">📁</span> Solo en Dir A</h3>
+                    <div class="panel-header-actions">
+                        <button type="button" class="btn btn-copy-batch btn-xs" id="batchCopyAtoB" title="Copiar todos los archivos visibles a Dir B">
+                            Copiar visibles → B
+                        </button>
+                        <span class="badge-count badge-warning" id="badge-solo_a">{{ solo_en_a|length }}</span>
+                    </div>
+                </div>
+                <p class="list-subtitle text-muted truncate-path" title="{{ dir_a }}">{{ dir_a }}</p>
+                <div class="search-box category-search-box">
+                    <span class="search-icon">🔎</span>
+                    <input type="text" class="category-search-input" data-category="solo_a" placeholder="Filtrar Solo en A..." autocomplete="off">
+                    <button type="button" class="search-clear-btn hidden" data-clear-category="solo_a" title="Limpiar">&times;</button>
+                </div>
+            </div>
+            <div class="file-list-wrapper" id="list-solo_a"></div>
+        </section>
+
+        <!-- Solo en Dir B -->
+        <section class="glass-panel lists-container" data-category="solo_b">
+            <div class="panel-header">
+                <div class="panel-title-row">
+                    <h3 class="list-title"><span class="icon">📁</span> Solo en Dir B</h3>
+                    <div class="panel-header-actions">
+                        <button type="button" class="btn btn-copy-batch btn-xs" id="batchCopyBtoA" title="Copiar todos los archivos visibles a Dir A">
+                            ← Copiar visibles a A
+                        </button>
+                        <span class="badge-count badge-info" id="badge-solo_b">{{ solo_en_b|length }}</span>
+                    </div>
+                </div>
+                <p class="list-subtitle text-muted truncate-path" title="{{ dir_b }}">{{ dir_b }}</p>
+                <div class="search-box category-search-box">
+                    <span class="search-icon">🔎</span>
+                    <input type="text" class="category-search-input" data-category="solo_b" placeholder="Filtrar Solo en B..." autocomplete="off">
+                    <button type="button" class="search-clear-btn hidden" data-clear-category="solo_b" title="Limpiar">&times;</button>
+                </div>
+            </div>
+            <div class="file-list-wrapper" id="list-solo_b"></div>
+        </section>
     </div>
+
+    <!-- Sección colapsable de Archivos Iguales -->
+    <details class="glass-panel equal-files-panel" id="equalFilesPanel">
+        <summary class="equal-files-summary">
+            <div class="panel-title-row">
+                <h3 class="list-title"><span class="icon">✅</span> Archivos Iguales</h3>
+                <span class="badge-count badge-success" id="badge-iguales">{{ iguales|length }}</span>
+            </div>
+            <span class="summary-hint">Clic para expandir o contraer</span>
+        </summary>
+        <div class="equal-files-body">
+            <div class="search-box category-search-box equal-search-box">
+                <span class="search-icon">🔎</span>
+                <input type="text" class="category-search-input" data-category="iguales" placeholder="Filtrar archivos iguales..." autocomplete="off">
+                <button type="button" class="search-clear-btn hidden" data-clear-category="iguales" title="Limpiar">&times;</button>
+            </div>
+            <div class="file-list-wrapper equal-list-wrapper" id="list-iguales"></div>
+        </div>
+    </details>
 </div>
 {% endblock %}
